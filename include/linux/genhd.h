@@ -328,6 +328,8 @@ static inline void part_stat_set_all(struct hd_struct *part, int value)
 				sizeof(struct disk_stats));
 }
 
+void part_stat_read_all(struct hd_struct *part, struct disk_stats *stat);
+
 static inline int init_part_stats(struct hd_struct *part)
 {
 	part->dkstats = alloc_percpu(struct disk_stats);
@@ -354,6 +356,11 @@ static inline void part_stat_set_all(struct hd_struct *part, int value)
 	memset(&part->dkstats, value, sizeof(struct disk_stats));
 }
 
+static inline void part_stat_read_all(struct hd_struct *part, struct disk_stats *stat)
+{
+	memcpy(stat, &part->dkstats, sizeof(struct disk_stats));
+}
+
 static inline int init_part_stats(struct hd_struct *part)
 {
 	return 1;
@@ -364,9 +371,6 @@ static inline void free_part_stats(struct hd_struct *part)
 }
 
 #endif /* CONFIG_SMP */
-
-#define part_stat_read_msecs(part, which)				\
-	div_u64(part_stat_read(part, nsecs[which]), NSEC_PER_MSEC)
 
 #define part_stat_read_accum(part, field)				\
 	(part_stat_read(part, field[STAT_READ]) +			\
