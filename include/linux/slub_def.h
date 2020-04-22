@@ -191,4 +191,6 @@ static inline unsigned int obj_to_index(const struct kmem_cache *cache,
 				 cache->reciprocal_size);
 }
 
+extern int objs_per_slab(struct kmem_cache *cache);
+
 #endif /* _LINUX_SLUB_DEF_H */

@@ -114,4 +114,9 @@ static inline unsigned int obj_to_index(const struct kmem_cache *cache,
 	return reciprocal_divide(offset, cache->reciprocal_buffer_size);
 }
 
+static inline int objs_per_slab(const struct kmem_cache *cache)
+{
+	return cache->num;
+}
+
 #endif	/* _LINUX_SLAB_DEF_H */

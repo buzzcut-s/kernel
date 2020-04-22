@@ -5948,3 +5948,8 @@ ssize_t slabinfo_write(struct file *file, const char __user *buffer,
 	return -EIO;
 }
 #endif /* CONFIG_SLUB_DEBUG */
+
+int objs_per_slab(struct kmem_cache *cache)
+{
+	return oo_objects(cache->oo);
+}
