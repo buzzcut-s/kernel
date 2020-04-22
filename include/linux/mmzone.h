@@ -246,6 +246,11 @@ enum node_stat_item {
 	NR_VM_NODE_STAT_ITEMS
 };
 
+static __always_inline bool vmstat_item_in_bytes(enum node_stat_item item)
+{
+	return false;
+}
+
 /*
  * We do arithmetic on the LRU lists in various places in the code,
  * so it is important to keep the active lists LRU_ACTIVE higher in
