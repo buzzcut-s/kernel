@@ -372,9 +372,7 @@ static __always_inline int memcg_charge_slab(struct page *page,
 	lruvec = mem_cgroup_lruvec(memcg, page_pgdat(page));
 	mod_lruvec_state(lruvec, cache_vmstat_idx(s), 1 << (order + PAGE_SHIFT));
 
-	/* transer try_charge() page references to kmem_cache */
 	percpu_ref_get_many(&s->memcg_params.refcnt, 1 << order);
-	css_put_many(&memcg->css, 1 << order);
 out:
 	css_put(&memcg->css);
 	return ret;
