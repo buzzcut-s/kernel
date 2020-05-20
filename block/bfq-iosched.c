@@ -1928,7 +1928,6 @@ static void bfq_add_request(struct request *rq)
 		 * I/O-plugging interval for bfqq.
 		 */
 		if (bfqd->last_completed_rq_bfqq &&
-		    !bfq_bfqq_has_short_ttime(bfqq) &&
 		    ktime_get_ns() - bfqd->last_completion <
 		    200 * NSEC_PER_USEC) {
 			if (bfqd->last_completed_rq_bfqq != bfqq &&
@@ -4498,7 +4497,7 @@ check_queue:
 			bfqq = bfqq->bic->bfqq[0];
 		else if (bfq_bfqq_has_waker(bfqq) &&
 			   bfq_bfqq_busy(bfqq->waker_bfqq) &&
-			   bfqq->next_rq &&
+			   bfqq->waker_bfqq->next_rq &&
 			   bfq_serv_to_charge(bfqq->waker_bfqq->next_rq,
 					      bfqq->waker_bfqq) <=
 			   bfq_bfqq_budget_left(bfqq->waker_bfqq)

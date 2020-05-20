@@ -525,7 +525,7 @@ void inode_pages_clear(struct inode *inode)
 
 	spin_unlock(&inode->i_lock);
 }
-#endif /* CONFIG_HIGHMEM */
+#endif /* !CONFIG_HIGHMEM */
 
 /**
  * inode_sb_list_add - add inode to the superblock list of inodes

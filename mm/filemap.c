@@ -846,10 +846,10 @@ static int __add_to_page_cache_locked(struct page *page,
 				      void **shadowp)
 {
 	XA_STATE(xas, &mapping->i_pages, offset);
-	int error;
 	int huge = PageHuge(page);
 	struct mem_cgroup *memcg;
 	bool populated = false;
+	int error;
 	void *old;
 
 	VM_BUG_ON_PAGE(!PageLocked(page), page);

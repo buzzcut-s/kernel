@@ -365,17 +365,6 @@ static inline struct blkcg_gq *blkg_lookup(struct blkcg *blkcg,
 }
 
 /**
- * blk_queue_root_blkg - return blkg for the (blkcg_root, @q) pair
- * @q: request_queue of interest
- *
- * Lookup blkg for @q at the root level. See also blkg_lookup().
- */
-static inline struct blkcg_gq *blk_queue_root_blkg(struct request_queue *q)
-{
-	return q->root_blkg;
-}
-
-/**
  * blkg_to_pdata - get policy private data
  * @blkg: blkg of interest
  * @pol: policy of interest
@@ -452,19 +441,6 @@ static inline void blkcg_cgwb_put(struct blkcg *blkcg)
 }
 
 #endif
-
-/**
- * blkg_path - format cgroup path of blkg
- * @blkg: blkg of interest
- * @buf: target buffer
- * @buflen: target buffer length
- *
- * Format the path of the cgroup of @blkg into @buf.
- */
-static inline int blkg_path(struct blkcg_gq *blkg, char *buf, int buflen)
-{
-	return cgroup_path(blkg->blkcg->css.cgroup, buf, buflen);
-}
 
 /**
  * blkg_get - get a blkg reference
@@ -579,63 +555,6 @@ static inline void blkcg_bio_issue_init(struct bio *bio)
 	bio_issue_init(&bio->bi_issue, bio_sectors(bio));
 }
 
-static inline bool blkcg_bio_issue_check(struct request_queue *q,
-					 struct bio *bio)
-{
-	struct blkcg_gq *blkg;
-	bool throtl = false;
-
-	rcu_read_lock();
-
-	if (!bio->bi_blkg) {
-		char b[BDEVNAME_SIZE];
-
-		WARN_ONCE(1,
-			  "no blkg associated for bio on block-device: %s\n",
-			  bio_devname(bio, b));
-		bio_associate_blkg(bio);
-	}
-
-	blkg = bio->bi_blkg;
-
-	throtl = blk_throtl_bio(q, blkg, bio);
-
-	if (!throtl) {
-		struct blkg_iostat_set *bis;
-		int rwd, cpu;
-
-		if (op_is_discard(bio->bi_opf))
-			rwd = BLKG_IOSTAT_DISCARD;
-		else if (op_is_write(bio->bi_opf))
-			rwd = BLKG_IOSTAT_WRITE;
-		else
-			rwd = BLKG_IOSTAT_READ;
-
-		cpu = get_cpu();
-		bis = per_cpu_ptr(blkg->iostat_cpu, cpu);
-		u64_stats_update_begin(&bis->sync);
-
-		/*
-		 * If the bio is flagged with BIO_QUEUE_ENTERED it means this
-		 * is a split bio and we would have already accounted for the
-		 * size of the bio.
-		 */
-		if (!bio_flagged(bio, BIO_QUEUE_ENTERED))
-			bis->cur.bytes[rwd] += bio->bi_iter.bi_size;
-		bis->cur.ios[rwd]++;
-
-		u64_stats_update_end(&bis->sync);
-		if (cgroup_subsys_on_dfl(io_cgrp_subsys))
-			cgroup_rstat_updated(blkg->blkcg->css.cgroup, cpu);
-		put_cpu();
-	}
-
-	blkcg_bio_issue_init(bio);
-
-	rcu_read_unlock();
-	return !throtl;
-}
-
 static inline void blkcg_use_delay(struct blkcg_gq *blkg)
 {
 	if (atomic_add_return(1, &blkg->use_delay) == 1)
@@ -686,6 +605,7 @@ static inline void blkcg_clear_delay(struct blkcg_gq *blkg)
 	}
 }
 
+bool blkcg_bio_issue_check(struct request_queue *q, struct bio *bio);
 void blkcg_add_delay(struct blkcg_gq *blkg, u64 now, u64 delta);
 void blkcg_schedule_throttle(struct request_queue *q, bool use_memdelay);
 void blkcg_maybe_throttle_current(void);
@@ -721,8 +641,6 @@ static inline bool blk_cgroup_congested(void) { return false; }
 static inline void blkcg_schedule_throttle(struct request_queue *q, bool use_memdelay) { }
 
 static inline struct blkcg_gq *blkg_lookup(struct blkcg *blkcg, void *key) { return NULL; }
-static inline struct blkcg_gq *blk_queue_root_blkg(struct request_queue *q)
-{ return NULL; }
 static inline int blkcg_init_queue(struct request_queue *q) { return 0; }
 static inline void blkcg_exit_queue(struct request_queue *q) { }
 static inline int blkcg_policy_register(struct blkcg_policy *pol) { return 0; }
@@ -738,7 +656,6 @@ static inline struct blkcg *bio_blkcg(struct bio *bio) { return NULL; }
 static inline struct blkg_policy_data *blkg_to_pd(struct blkcg_gq *blkg,
 						  struct blkcg_policy *pol) { return NULL; }
 static inline struct blkcg_gq *pd_to_blkg(struct blkg_policy_data *pd) { return NULL; }
-static inline char *blkg_path(struct blkcg_gq *blkg) { return NULL; }
 static inline void blkg_get(struct blkcg_gq *blkg) { }
 static inline void blkg_put(struct blkcg_gq *blkg) { }
 
