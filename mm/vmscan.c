@@ -3702,7 +3702,7 @@ restart:
 		ret = try_to_freeze();
 		__fs_reclaim_acquire();
 		if (ret || kthread_should_stop() ||
-		    !atomic_read(&pgdat->kswapd_waiters))
+		    !atomic_long_read(&kswapd_waiters))
 			break;
 
 		/*
@@ -4251,7 +4251,8 @@ int node_reclaim(struct pglist_data *pgdat, gfp_t gfp_mask, unsigned int order)
 	 * unmapped file backed pages.
 	 */
 	if (node_pagecache_reclaimable(pgdat) <= pgdat->min_unmapped_pages &&
-	    node_page_state(pgdat, NR_SLAB_RECLAIMABLE) <= pgdat->min_slab_pages)
+	    node_page_state_pages(pgdat, NR_SLAB_RECLAIMABLE_B) <=
+	    pgdat->min_slab_pages)
 		return NODE_RECLAIM_FULL;
 
 	/*

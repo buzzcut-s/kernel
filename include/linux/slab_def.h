@@ -72,9 +72,6 @@ struct kmem_cache {
 	int obj_offset;
 #endif /* CONFIG_DEBUG_SLAB */
 
-#ifdef CONFIG_MEMCG
-	struct memcg_cache_params memcg_params;
-#endif
 #ifdef CONFIG_KASAN
 	struct kasan_cache kasan_info;
 #endif
@@ -112,6 +109,11 @@ static inline unsigned int obj_to_index(const struct kmem_cache *cache,
 {
 	u32 offset = (obj - page->s_mem);
 	return reciprocal_divide(offset, cache->reciprocal_buffer_size);
+}
+
+static inline int objs_per_slab(const struct kmem_cache *cache)
+{
+	return cache->num;
 }
 
 #endif	/* _LINUX_SLAB_DEF_H */
